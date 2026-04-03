@@ -127,11 +127,19 @@ def generate_frame(img_base, base_structure, sword_mask, width=80, contrast=2.2,
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: python ascii_animator.py <image_path> [width]")
+        print("Usage: python ascii_animator.py <image_path> [width] [--record]")
         return
 
+    is_record = "--record" in sys.argv
     img_path = sys.argv[1]
-    width = int(sys.argv[2]) if len(sys.argv) > 2 else 80
+    
+    # Simple width parsing that ignores the --record flag if present
+    width = 80
+    for arg in sys.argv[2:]:
+        if arg.isdigit():
+            width = int(arg)
+            break
+            
     if not os.path.exists(img_path): return
 
     base_img = Image.open(img_path).convert('RGB')
@@ -139,14 +147,17 @@ def main():
     bbox = mask.getbbox()
     if bbox: base_img = base_img.crop(bbox)
 
-    print("\x1b[?25l", end="") # Hide cursor
+    if not is_record:
+        print("\x1b[?25l", end="") # Hide cursor
     
     # 1. RENDER PERFECT BASE STRUCTURE (The Structural Floor)
-    print("Capturing Perfect Base Structure...")
+    if not is_record:
+        print("Capturing Perfect Base Structure...")
     base_structure = render_base_structure(base_img, width=width)
     
     # 2. MAP THE CORE: Create sword_mask from central columns
-    print("Mapping Sword Core Mask...")
+    if not is_record:
+        print("Mapping Sword Core Mask...")
     new_width = len(base_structure[0])
     new_height = len(base_structure)
     center_x = new_width // 2
@@ -161,24 +172,38 @@ def main():
                 sword_mask.add((x, y))
 
     num_frames = 24
-    print(f"Generating {num_frames} frames with Absolute Structural Floor...")
+    if not is_record:
+        print(f"Generating {num_frames} frames with Absolute Structural Floor...")
     frames = []
     for i in range(num_frames):
         f_val = math.sin((i / num_frames) * 2 * math.pi)
         frame_str = generate_frame(base_img, base_structure, sword_mask, width=width, flicker_val=f_val, frame_idx=i, total_frames=num_frames)
         frames.append(frame_str)
-        print(f"Processing: {i+1}/{num_frames}", end="\r")
+        if not is_record:
+            print(f"Processing: {i+1}/{num_frames}", end="\r")
 
+    # THE CLEAN SLATE: Clear before animation starts
     os.system('cls' if os.name == 'nt' else 'clear')
+    
     try:
         idx = 0
-        while True:
-            sys.stdout.write("\x1b[H" + frames[idx])
-            sys.stdout.flush()
-            idx = (idx + 1) % num_frames
-            time.sleep(1/12)
+        if is_record:
+            # ONE-SHOT EXECUTION: Exactly one cycle through frames list
+            for idx in range(num_frames):
+                sys.stdout.write("\x1b[H" + frames[idx])
+                sys.stdout.flush()
+                time.sleep(1/12)
+            sys.exit(0) # Silent Exit
+        else:
+            # NORMAL INFINITE LOOP
+            while True:
+                sys.stdout.write("\x1b[H" + frames[idx])
+                sys.stdout.flush()
+                idx = (idx + 1) % num_frames
+                time.sleep(1/12)
     except KeyboardInterrupt:
-        print("\x1b[?25h\nAnimator closed.")
+        if not is_record:
+            print("\x1b[?25h\nAnimator closed.")
 
 if __name__ == "__main__":
     main()
