@@ -46,3 +46,5 @@ python3 ascii_converter.py sif.jpg 80
 This project is an open-source tribute to the **Dark Souls** series by FromSoftware. The pixel art inspiration and atmospheric vibes are rooted in the 'Soulslike' genre and its legacy of environmental storytelling.
 
 *Don't get hollow.*
+
+Co-authored-by: name <anbuxolo@gmail.com>
