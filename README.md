@@ -2,12 +2,12 @@
 
 A high-fidelity terminal-based ASCII animator and converter specifically tuned for Soulslike art. Features localized fire physics, wind sway, and true-color ANSI support.
 
-## Features
+## Key Features
+- **Base Frame Compositing**: The sword hilt is rendered from a static "Perfect Base Plate" and overlaid onto the animation. This ensures the sword is 100% immune to fire physics, preventing thinning or flickering.
 - **Cinematic 24-Frame Loop**: Optimized 24-frame pre-calculation engine for a silky-smooth, cinematic rotation.
-- **Structural Sword Lock**: A coordinate-based mask isolates the central hilt columns, ensuring the sword remains a 100% static anchor while the fire dances.
-- **80% Flicker Clamping**: Calibrated flicker logic (`0.8 + 0.2 * sin(t)`) ensures the fire stays bright and 'crispy,' never dropping below 80% luminance to eliminate blackout frames.
-- **Realistic Wind Bias**: Flames 'lick' toward the left and settle back to center, simulating a consistent environmental breeze.
-- **Hand-Drawn 12 FPS Cadence**: Intentionally slowed playback speed for an atmospheric, hand-drawn animation feel.
+- **Realistic Wind Dynamics**: Flames 'lick' toward the left and settle back to center, simulating a consistent environmental breeze from the right.
+- **80% Flicker Clamping**: Calibrated flicker logic ensures the bonfire maintains a constant, 'crispy' glow without ever dropping into blackout frames.
+- **Edge-Aware Mapping**: Specifically detects vertical metallic edges to force high-density character representation.
 
 ## Usage
 
