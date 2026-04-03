@@ -1,4 +1,4 @@
-<video src="bonfire.webm" autoplay loop muted playsinline width="100%">Your browser does not support the video tag.</video>
+![Soulslike ASCII Bonfire](final_bonfire.gif)
 
 # 🕯️ Soulslike ASCII Bonfire
 

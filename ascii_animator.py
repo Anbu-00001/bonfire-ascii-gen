@@ -126,10 +126,6 @@ def generate_frame(img_base, base_structure, sword_mask, width=80, contrast=2.2,
     return "\n".join(output)
 
 def main():
-    if len(sys.argv) < 2:
-        print("Usage: python ascii_animator.py <image_path> [width] [--record]")
-        return
-
     is_record = "--record" in sys.argv
     img_path = sys.argv[1]
     
@@ -141,6 +137,11 @@ def main():
             break
             
     if not os.path.exists(img_path): return
+
+    # SILENT BOOT: If recording, hide cursor immediately and silently
+    if is_record:
+        sys.stdout.write("\x1b[?25l")
+        sys.stdout.flush()
 
     base_img = Image.open(img_path).convert('RGB')
     mask = base_img.convert('L').point(lambda p: 255 if p > 15 else 0)
@@ -172,32 +173,52 @@ def main():
                 sword_mask.add((x, y))
 
     num_frames = 24
-    if not is_record:
-        print(f"Generating {num_frames} frames with Absolute Structural Floor...")
     frames = []
-    for i in range(num_frames):
-        f_val = math.sin((i / num_frames) * 2 * math.pi)
-        frame_str = generate_frame(base_img, base_structure, sword_mask, width=width, flicker_val=f_val, frame_idx=i, total_frames=num_frames)
-        frames.append(frame_str)
-        if not is_record:
-            print(f"Processing: {i+1}/{num_frames}", end="\r")
+    
+    # TOTAL SILENCE DURING COMPUTATION
+    # We use a context manager or simple redirection to ensure no leaks
+    _original_stdout = sys.stdout
+    if is_record:
+        sys.stdout = open(os.devnull, 'w')
 
-    # THE CLEAN SLATE: Clear before animation starts
-    os.system('cls' if os.name == 'nt' else 'clear')
+    try:
+        if not is_record:
+            print(f"Generating {num_frames} frames with Absolute Structural Floor...")
+        
+        for i in range(num_frames):
+            f_val = math.sin((i / num_frames) * 2 * math.pi)
+            frame_str = generate_frame(base_img, base_structure, sword_mask, width=width, flicker_val=f_val, frame_idx=i, total_frames=num_frames)
+            frames.append(frame_str)
+            if not is_record:
+                _original_stdout.write(f"Processing: {i+1}/{num_frames}\r")
+                _original_stdout.flush()
+    finally:
+        if is_record:
+            sys.stdout.close()
+            sys.stdout = _original_stdout
+
+    # THE CLEAN HANDOFF: No early prints, no intermediate clears.
+    # The playback loop below will perform the first wipe bundled with the first frame.
     
     try:
         idx = 0
         if is_record:
-            # ONE-SHOT EXECUTION: Exactly one cycle through frames list
-            for idx in range(num_frames):
-                sys.stdout.write("\x1b[H" + frames[idx])
-                sys.stdout.flush()
-                time.sleep(1/12)
+            # EXTENDED RECORDING: Exactly 5 cycles through frames (10 seconds at 12fps)
+            for _ in range(5):
+                for idx in range(num_frames):
+                    # ANTI-SCROLLING RENDER: Wipe screen for every frame to prevent stacking
+                    sys.stdout.write("\033[2J\033[H" + frames[idx])
+                    sys.stdout.flush()
+                    time.sleep(1/12)
+            
+            # RECORDING HOLD: Ensure final buffer is captured
+            time.sleep(1.0)
             sys.exit(0) # Silent Exit
         else:
             # NORMAL INFINITE LOOP
             while True:
-                sys.stdout.write("\x1b[H" + frames[idx])
+                # ANTI-SCROLLING RENDER: Consistency across all modes
+                sys.stdout.write("\033[2J\033[H" + frames[idx])
                 sys.stdout.flush()
                 idx = (idx + 1) % num_frames
                 time.sleep(1/12)
